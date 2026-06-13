@@ -1,0 +1,299 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+x3d-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#controls {
+  padding: 10px 16px;
+  background: #16213e;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-top: 1px solid #0f3460;
+}
+
+#controls button {
+  background: #0f3460;
+  color: #e0e0e0;
+  border: 1px solid #1a6ea8;
+  border-radius: 4px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#controls button:hover {
+  background: #1a6ea8;
+}
+
+#slider {
+  flex: 1;
+  min-width: 120px;
+  accent-color: #1a6ea8;
+}
+
+#speed {
+  width: 80px;
+  accent-color: #1a6ea8;
+}
+
+label {
+  font-size: 12px;
+  color: #a0a0c0;
+}
+
+#frame-label {
+  font-size: 13px;
+  min-width: 100px;
+}
+
+#status {
+  font-size: 11px;
+  color: #6080a0;
+  min-width: 160px;
+}
+
+#loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 18px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 24px 32px;
+  border-radius: 8px;
+  z-index: 10;
+  text-align: center;
+}
+
+/* ----------------------------------------------------------------------- *
+ * Sidebar — overlay panel anchored to the right of the viewport.          *
+ * ----------------------------------------------------------------------- */
+#sidebar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 280px;
+  max-height: calc(100% - 24px);
+  background: rgba(22, 33, 62, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #1a6ea8;
+  border-radius: 8px;
+  padding: 14px;
+  z-index: 5;
+  overflow-y: auto;
+  font-size: 13px;
+  transition: width 150ms ease, padding 150ms ease;
+}
+
+#sidebar.collapsed {
+  width: 44px;
+  padding: 6px;
+  overflow: hidden;
+}
+
+#sidebar.collapsed .sidebar-content {
+  display: none;
+}
+
+#sidebarToggle {
+  background: transparent;
+  color: #e0e0e0;
+  border: 1px solid #1a6ea8;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+#sidebarToggle:hover {
+  background: #1a6ea8;
+}
+
+#sidebar h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 12px 0 8px;
+  color: #c0d4ec;
+  letter-spacing: 0.3px;
+}
+
+.layer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  user-select: none;
+  color: #e0e0e0;
+}
+
+.layer-row input[type="checkbox"] {
+  accent-color: #1a6ea8;
+  cursor: pointer;
+}
+
+.layer-row input[type="checkbox"]:disabled + .swatch,
+.layer-row input[type="checkbox"]:disabled ~ span {
+  opacity: 0.4;
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.state-group {
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 10px;
+}
+
+.state-group legend {
+  padding: 0 6px;
+  color: #c0d4ec;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+/* ----------------------------------------------------------------------- *
+ * Camera controls                                                          *
+ * ----------------------------------------------------------------------- */
+.camera-presets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.cam-btn {
+  background: #0f3460;
+  color: #e0e0e0;
+  border: 1px solid #1a6ea8;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: center;
+}
+
+.cam-btn:hover {
+  background: #1a6ea8;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #a0a0c0;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  accent-color: #1a6ea8;
+}
+
+#zScaleVal {
+  min-width: 28px;
+  text-align: right;
+  color: #e0e0e0;
+  font-size: 12px;
+}
+
+.shortcuts-hint {
+  margin-top: 12px;
+  font-size: 11px;
+  color: #6080a0;
+  line-height: 1.6;
+}
+
+kbd {
+  background: #0f3460;
+  border: 1px solid #1a6ea8;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: monospace;
+}
+
+/* ----------------------------------------------------------------------- *
+ * Minimap                                                                  *
+ * ----------------------------------------------------------------------- */
+.minimap-wrap {
+  margin-top: 4px;
+}
+
+#minimapCanvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid #1a6ea8;
+  border-radius: 4px;
+  cursor: crosshair;
+  background: #1a2a3a;
+}
+
+/* ----------------------------------------------------------------------- *
+ * Legend                                                                   *
+ * ----------------------------------------------------------------------- */
+#legend {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #e0e0e0;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.legend-name {
+  flex: 1;
+}

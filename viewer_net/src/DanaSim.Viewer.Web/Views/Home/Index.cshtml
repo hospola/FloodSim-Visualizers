@@ -1,0 +1,132 @@
+@{
+    ViewData["Title"] = "DanaSim Viewer";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="/css/dashboard.css"/>
+}
+
+<div class="dashboard" id="dashboard">
+
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <button class="panel-toggle active" data-toggle="config">&#9881; Config</button>
+      <button class="panel-toggle active" data-toggle="status">&#9679; Status</button>
+      <button class="panel-toggle active" data-toggle="runs">&#128193; Runs</button>
+      <button class="panel-toggle active" data-toggle="logs">&#8801; Logs</button>
+    </div>
+    <span class="top-bar-title">DanaSim Viewer</span>
+  </header>
+
+  <aside class="sidebar">
+
+    <section class="panel-section" data-panel="config">
+      <div class="panel-heading">Configuration</div>
+      <div class="panel-body">
+        <div class="field-group">
+          <label for="cfg-host">MQTT Host</label>
+          <input id="cfg-host" type="text" placeholder="localhost" autocomplete="off"/>
+          <span class="field-error" id="err-mqttHost"></span>
+        </div>
+        <div class="field-group">
+          <label for="cfg-port">MQTT Port</label>
+          <input id="cfg-port" type="number" placeholder="1883" min="1" max="65535"/>
+          <span class="field-error" id="err-mqttPort"></span>
+        </div>
+        <div class="field-group">
+          <label for="cfg-scenario">Scenario</label>
+          <input id="cfg-scenario" type="text" autocomplete="off"/>
+          <span class="field-error" id="err-scenario"></span>
+        </div>
+        <div class="field-group">
+          <label for="cfg-terrain">Terrain folder</label>
+          <input id="cfg-terrain" type="text" autocomplete="off"/>
+          <span class="field-error" id="err-terrainBasePath"></span>
+        </div>
+        <div class="field-group">
+          <label for="cfg-output">Output folder</label>
+          <input id="cfg-output" type="text" autocomplete="off"/>
+          <span class="field-error" id="err-outputDir"></span>
+        </div>
+        <div class="btn-row">
+          <button id="saveBtn"       class="btn btn-primary">Save</button>
+          <button id="connectBtn"    class="btn btn-success">Connect</button>
+          <button id="disconnectBtn" class="btn btn-danger">Disconnect</button>
+        </div>
+        <p class="save-feedback" id="saveFeedback"></p>
+      </div>
+    </section>
+
+    <section class="panel-section" data-panel="status">
+      <div class="panel-heading">Status</div>
+      <div class="panel-body">
+        <div class="status-row">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Disconnected</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Phase</span>
+          <span id="phase">Idle</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Frames</span>
+          <span id="frameCount">0</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Sim time</span>
+          <span id="simTime">&#8212;</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Scenario</span>
+          <span id="scenarioText">&#8212;</span>
+        </div>
+        <p class="error-msg" id="lastError"></p>
+      </div>
+    </section>
+
+    <section class="panel-section" data-panel="runs">
+      <div class="panel-heading">Past Runs</div>
+      <div class="panel-body">
+        <div class="btn-row">
+          <button id="runsRefreshBtn" class="btn-sm">Refresh</button>
+          <button id="runsLiveBtn" class="btn-sm">Back to live</button>
+        </div>
+        <div class="runs-list" id="runsList"></div>
+      </div>
+    </section>
+
+  </aside>
+
+  <main class="viewer">
+    <iframe id="viewerFrame" src="about:blank" title="3D Viewer" allowfullscreen></iframe>
+  </main>
+
+  <section class="logs" data-panel="logs">
+    <div class="logs-header">
+      <span class="logs-title">Logs</span>
+      <span class="badge" id="logBadge"></span>
+      <span class="logs-last" id="logsLastLine"></span>
+      <div class="log-filters">
+        <button class="filter-btn active" data-level="DBG">DBG</button>
+        <button class="filter-btn active" data-level="INF">INF</button>
+        <button class="filter-btn active" data-level="WRN">WRN</button>
+        <button class="filter-btn active" data-level="ERR">ERR</button>
+      </div>
+      <button id="clearLogsBtn" class="btn-sm">Clear</button>
+    </div>
+    <div class="log-list" id="logList"></div>
+  </section>
+
+</div>
+
+<script>
+window.__DASHBOARD__ = {
+  statusUrl:     "/api/status",
+  configUrl:     "/api/config",
+  logsUrl:       "/api/logs",
+  runsUrl:       "/api/runs",
+  connectUrl:    "/api/control/connect",
+  disconnectUrl: "/api/control/disconnect",
+};
+</script>
+<script type="module" src="/js/dashboard/app.js"></script>

@@ -1,0 +1,13 @@
+# Comunicación MQTT
+# Aún recomiendo la 1.6.1 para mantener similitud lógica con la 1.3 de C++,
+# pero aquí ya podrías usar la 2.0 si quisieras reescribir los callbacks.
+paho-mqtt>=1.6.1,<2.0.0
+
+numpy
+matplotlib
+rasterio
+pyproj
+affine
+loguru
+pyyaml
+jinja2>=3.1

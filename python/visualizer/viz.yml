@@ -1,0 +1,20 @@
+# DanaSim visualization configuration
+# Run: python run_viz.py [terrain|flood|x3d|cesium|serve]
+
+paths:
+  idrisi:          data/data_29_10_2024/topo_bathy
+  csv_data:        sim_outputs/csv_data
+  terrain_tiles:   tiles/terrain
+  flood_tiles:     tiles/flood
+  x3d_heightmap:   sim_outputs/x3d_heightmap
+  palette:         data/data_29_10_2024/color_palette.json
+
+terrain:
+  min_zoom: 8
+  max_zoom: 13
+
+x3d_heightmap:
+  resolution: 5.0   # metres per PNG pixel (5 = full resolution)
+
+server:
+  port: 8080

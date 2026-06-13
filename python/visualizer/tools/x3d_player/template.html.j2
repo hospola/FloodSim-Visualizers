@@ -1,0 +1,137 @@
+{#-
+  DanaSim X3D heightmap player — Jinja2 template.
+
+  CSS is embedded inline (it is small and shared across modules).
+  JavaScript lives as ES modules under ``js/`` next to this file at output
+  time; the browser loads them natively from ``<script type="module">``.
+  Runtime configuration is injected as ``window.__CONFIG__`` before the
+  module graph executes.
+
+  Template variables expected:
+    - inlined_css   : raw CSS to embed inside <style>
+    - config_json   : JSON string with all runtime constants for the JS
+    - viewpoints    : dict with overview/cenital/lateral {pos, orient} strings
+    - n_frames      : number of flood frames (sets the slider max)
+    - rows, cols, cell_size, frame_count : informational comment for debugging
+-#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>DanaSim Heightmap Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/x_ite@12.1.4/dist/x_ite.min.js"></script>
+  <style>
+{{ inlined_css }}
+  </style>
+</head>
+<body>
+  <!-- rows={{ rows }} cols={{ cols }} cell_size={{ cell_size }}m frames={{ frame_count }} -->
+  <div id="loading">Decoding heightmap and building 3D terrain…</div>
+  <div id="viewport">
+    <x3d-canvas>
+      <x3d>
+        <scene>
+          <background skyColor="0.53 0.81 0.98"></background>
+
+          <Viewpoint DEF="VP_Overview"
+                     position="{{ viewpoints.overview.pos }}"
+                     orientation="{{ viewpoints.overview.orient }}"
+                     description="Overview"></Viewpoint>
+          <Viewpoint DEF="VP_Cenital"
+                     position="{{ viewpoints.cenital.pos }}"
+                     orientation="{{ viewpoints.cenital.orient }}"
+                     description="Cenital"></Viewpoint>
+          <Viewpoint DEF="VP_Lateral"
+                     position="{{ viewpoints.lateral.pos }}"
+                     orientation="{{ viewpoints.lateral.orient }}"
+                     description="Lateral"></Viewpoint>
+
+          <!-- VP_Zone is updated by minimap.js before binding -->
+          <Viewpoint DEF="VP_Zone" position="0 1 1" orientation="1 0 0 -0.5"
+                     description="Zona seleccionada"></Viewpoint>
+
+          <NavigationInfo type='"EXAMINE" "ANY"' speed="500"></NavigationInfo>
+
+          <Transform DEF="ZScale" scale="1 1 1">
+            <Group id="terrain_container"></Group>
+          </Transform>
+        </scene>
+      </x3d>
+    </x3d-canvas>
+
+    <aside id="sidebar" aria-label="Panel de control">
+      <button id="sidebarToggle" type="button" aria-label="Mostrar/ocultar panel">&#9776;</button>
+      <div class="sidebar-content">
+
+        <h2>Capas</h2>
+        <label class="layer-row">
+          <input id="layerTerrain" type="checkbox" checked/>
+          <span>Terreno</span>
+        </label>
+        <label class="layer-row">
+          <input id="layerWater" type="checkbox" checked/>
+          <span>Agua</span>
+        </label>
+        <fieldset class="state-group">
+          <legend>Profundidad</legend>
+          {% for i in range(1, state_names | length) %}
+          <label class="layer-row">
+            <input id="layerState{{ i }}" type="checkbox" checked/>
+            <span class="swatch" data-state="{{ i }}"></span>
+            <span>{{ state_names[i] }}</span>
+          </label>
+          {% endfor %}
+        </fieldset>
+
+        <h2>Cámara</h2>
+        <div class="camera-presets">
+          <button class="cam-btn" data-vp="VP_Overview" title="Vista perspectiva (P)">Perspectiva</button>
+          <button class="cam-btn" data-vp="VP_Cenital"  title="Vista cenital (C)">Cenital</button>
+          <button class="cam-btn" data-vp="VP_Lateral"  title="Vista lateral (L)">Lateral</button>
+          <button class="cam-btn" id="camReset"          title="Resetear cámara (R)">&#8635; Reset</button>
+        </div>
+
+        <div class="slider-row">
+          <label for="zScale">Exageración Z</label>
+          <input id="zScale" type="range" min="1" max="10" value="1" step="0.5"/>
+          <span id="zScaleVal">1×</span>
+        </div>
+
+        <p class="shortcuts-hint">
+          Atajos: <kbd>C</kbd> cenital &nbsp;·&nbsp; <kbd>P</kbd> perspectiva
+          &nbsp;·&nbsp; <kbd>L</kbd> lateral &nbsp;·&nbsp; <kbd>R</kbd> reset
+          &nbsp;·&nbsp; <kbd>Space</kbd> play &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> frames
+        </p>
+
+        <h2>Minimapa</h2>
+        <div class="minimap-wrap">
+          <canvas id="minimapCanvas" title="Arrastra para seleccionar zona"></canvas>
+          <button id="minimapReset" class="cam-btn" style="margin-top:6px;width:100%">
+            &#8635; Vista completa
+          </button>
+        </div>
+
+        <h2>Leyenda</h2>
+        <div id="legend"></div>
+
+      </div>
+    </aside>
+  </div>
+
+  <div id="controls">
+    <button id="prevBtn">&#9664;</button>
+    <button id="playBtn">&#9654; Play</button>
+    <button id="nextBtn">&#9654;&#9654;</button>
+    <input id="slider" type="range" min="0" max="{{ n_frames - 1 }}" value="0"/>
+    <span id="frame-label">Frame 0 / {{ n_frames - 1 }}</span>
+    <label>Speed <input id="speed" type="range" min="100" max="2000" value="800" step="100"/></label>
+    <button id="followBtn" title="Saltar al último frame al llegar uno nuevo">📍 Seguir</button>
+    <span id="status">Loading terrain…</span>
+  </div>
+
+  <script>
+window.__CONFIG__ = {{ config_json }};
+  </script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DanaSim.Viewer.Application/DanaSim.Viewer.Application.csproj" />
+    <Project Path="src/DanaSim.Viewer.Domain/DanaSim.Viewer.Domain.csproj" />
+    <Project Path="src/DanaSim.Viewer.Infrastructure/DanaSim.Viewer.Infrastructure.csproj" />
+    <Project Path="src/DanaSim.Viewer.Web/DanaSim.Viewer.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DanaSim.Viewer.Application.Tests/DanaSim.Viewer.Application.Tests.csproj" />
+    <Project Path="tests/DanaSim.Viewer.Domain.Tests/DanaSim.Viewer.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

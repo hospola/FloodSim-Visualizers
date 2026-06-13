@@ -1,0 +1,90 @@
+@{
+    ViewData["Title"] = "3D Simulation";
+    Layout = null; // full-screen, no chrome
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DanaSim — 3D Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+
+        #viewer-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* X_ITE canvas fills the container */
+        x3d-canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #status-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.4rem 1rem;
+            background: rgba(0,0,0,0.6);
+            color: #eee;
+            font: 13px monospace;
+            display: flex;
+            gap: 2rem;
+        }
+
+        #overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            font-size: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer-container">
+
+        <!-- X3D scene — populated by x3d-scene-manager.js on InitialState -->
+        <x3d-canvas id="x3d-canvas">
+            <X3D>
+                <Scene id="x3d-scene">
+                    <!-- Filled dynamically by JavaScript -->
+                </Scene>
+            </X3D>
+        </x3d-canvas>
+
+        <div id="status-bar">
+            <span id="status-phase">Connecting…</span>
+            <span id="status-time"></span>
+            <span id="status-cells"></span>
+        </div>
+
+        <div id="overlay">Simulation ended</div>
+    </div>
+
+    <!-- X_ITE — X3D v4 renderer -->
+    <script src="https://cdn.jsdelivr.net/npm/x_ite@@latest/dist/x_ite.min.js"></script>
+
+    <!-- SignalR client -->
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
+
+    <!-- Our viewer logic (Phase 5) -->
+    <script src="/js/x3d-scene-manager.js"></script>
+    <script src="/js/simulation-viewer.js"></script>
+
+    <script>
+        // Pass server-side config to JS
+        window.DANASIM_CONFIG = {
+            scenario: "@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Scenario ?? "scenario_29_10_2024"))"
+        };
+    </script>
+</body>
+</html>

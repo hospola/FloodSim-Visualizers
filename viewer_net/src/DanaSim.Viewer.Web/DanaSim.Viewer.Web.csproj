@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DanaSim.Viewer.Infrastructure\DanaSim.Viewer.Infrastructure.csproj" />
+    <ProjectReference Include="..\DanaSim.Viewer.Application\DanaSim.Viewer.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="PlayerAssets\**" />
+  </ItemGroup>
+
+  <Target Name="CopyLauncherScripts" AfterTargets="Publish">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\run.sh"  DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\run.bat" DestinationFolder="$(PublishDir)" />
+  </Target>
+
+</Project>

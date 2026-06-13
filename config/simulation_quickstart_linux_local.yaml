@@ -1,0 +1,99 @@
+scenario:
+  output_dir: /usr/share/floodsim/outputs
+  name: quickstart_valencia_demo
+  append_start_timestamp: true
+
+logging:
+  level: Info
+  async: false
+  silent: false
+  save_log_file: true
+
+input:
+  file:
+    static_format: Idrisi
+    dynamic_format: Hif
+    dataset_folder: /usr/share/floodsim/data
+    dataset_name: data_29_10_2024
+  scalars:
+    fluid_density: 1000.0
+    fluid_viscosity: 0.001
+
+output:
+  snapshot:
+    every_n_steps: 20
+  outputs:
+    - type: Image
+    - type: Checkpoint
+      static_format: Idrisi
+
+state_updater:
+  enable_rainfall: true
+  dry_tolerance: 0.001
+  flood_risk:
+    default_level:
+      name: Dry
+      color_hex: F5DEB3FF
+    levels:
+      - name: H1 - Minor Pedestrian Hazard
+        threshold_start: 0.2
+        color_hex: "#FFF176FF"
+      - name: H2 - Small Vehicle Instability
+        threshold_start: 0.4
+        color_hex: "#FFD54FFF"
+      - name: H3 - Widespread Vehicle Instability
+        threshold_start: 0.6
+        color_hex: "#FFB74DFF"
+      - name: H4 - Severe Danger to People
+        threshold_start: 0.8
+        color_hex: "#FFA726FF"
+      - name: H5 - Major Internal Content Damage
+        threshold_start: 1
+        color_hex: "#FF8A65FF"
+      - name: H6 - High Wading and Rescue Hazard
+        threshold_start: 1.2
+        color_hex: "#FF7043FF"
+      - name: H7 - Hydrostatic Pressure Accumulation
+        threshold_start: 1.4
+        color_hex: "#F4511EFF"
+      - name: H8 - Non-Structural Component Failure
+        threshold_start: 1.6
+        color_hex: "#E64A19FF"
+      - name: H9 - Structural Damage Threshold
+        threshold_start: 1.8
+        color_hex: "#D84315FF"
+      - name: H10 - First-Floor Submersion Risk
+        threshold_start: 2
+        color_hex: "#E53935FF"
+      - name: H11 - Complete First-Floor Submersion
+        threshold_start: 2.5
+        color_hex: "#C62828FF"
+      - name: H12 - Structural Integrity Failure Risk
+        threshold_start: 3.5
+        color_hex: "#B71C1CFF"
+      - name: H13 - Multi-Story Inundation
+        threshold_start: 5
+        color_hex: "#880E4FFF"
+      - name: H14 - Extreme Infrastructure Failure
+        threshold_start: 8
+        color_hex: "#4A148CFF"
+      - name: H15 - Maximum Structural Collapse Limit
+        threshold_start: 12
+        color_hex: "#1A001AFF"
+  updater:
+    type: Onnx
+    model_path: /usr/share/floodsim/exported_models/first_model_cpu
+    tensor_dim: 16
+
+simulation:
+  start_timestamp: 2024-10-29T01:00:00
+  time_step: 00:00:00.25
+  duration: 00:01:00
+  view_box: 
+    use_full_grid: true
+    south_west:
+      lon: 0.0
+      lat: 0.0
+    north_east:
+      lon: 0.0
+      lat: 0.0
