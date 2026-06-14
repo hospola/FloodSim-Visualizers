@@ -20,7 +20,7 @@ if [[ "${1:-}" == "--with-data" ]]; then
   SUFFIX="-full"
 fi
 
-VERSION="1.0.0"
+VERSION="${VERSION:-1.0.0}"
 ARCH="amd64"
 PKG="danasim-viewer${SUFFIX}_${VERSION}_${ARCH}"
 SRC="$(cd "$(dirname "$0")/../publish/linux-x64" && pwd)"
