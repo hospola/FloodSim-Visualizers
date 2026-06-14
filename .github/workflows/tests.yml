@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, main]
   pull_request:
-    branches: [develop]
+    branches: [develop, main]
 
 jobs:
   python-tests:
@@ -40,6 +40,7 @@ jobs:
         run: dotnet test viewer_net/DanaSim.Viewer.slnx --no-restore
 
   sonarcloud:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
