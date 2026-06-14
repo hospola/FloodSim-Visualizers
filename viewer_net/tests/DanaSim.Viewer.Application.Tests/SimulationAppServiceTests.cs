@@ -16,7 +16,7 @@ public class SimulationAppServiceTests
     private readonly Mock<ISimulationBroadcaster> _broadcaster = new();
     private readonly Mock<ITerrainDataReader> _terrain = new();
 
-    private SimulationAppService BuildService()
+    private SimulationAppService BuildService(int frameTimeoutMs = 30_000)
     {
         _terrain.Setup(t => t.ReadHeightsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((float[]?)null);
@@ -34,9 +34,16 @@ public class SimulationAppServiceTests
             new SimEndHandler(new SimulationStatusService(), NullLogger<SimEndHandler>.Instance),
             _control.Object,
             _broadcaster.Object,
-            Options.Create(new SimulationAppServiceOptions()),
+            Options.Create(new SimulationAppServiceOptions { FrameTimeoutMs = frameTimeoutMs }),
             NullLogger<SimulationAppService>.Instance);
     }
+
+    private const string InitMapConfigPayload = """
+        {"process":"InitMap_Config",
+         "map":{"size_x":2,"size_y":2,"cell_resolution_m":50.0},
+         "metadata":{"sim_start_time":"2024-10-29T10:00:00","time_step_s":1.0},
+         "georeference":{"lat":39.3,"lon":-0.7}}
+        """;
 
     [Fact]
     public async Task MalformedJson_IsDiscardedWithoutException()
@@ -174,5 +181,113 @@ public class SimulationAppServiceTests
         await service.HandleEventAsync("""{"process":"Sim_End","sim_time_total":3600.0}""");
 
         _broadcaster.Verify(b => b.BroadcastSimulationEndedAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task PayloadMissingProcessField_IsDiscardedWithoutException()
+    {
+        var service = BuildService();
+        var act = () => service.HandleEventAsync("""{"foo":"bar"}""");
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task HandlerException_IsCaughtAndLogged()
+    {
+        var service = BuildService();
+        var act = () => service.HandleEventAsync("""{"process":"FrameStart","total_chunks":"oops","chunks_per_batch":10}""");
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task FrameTimeout_DiscardsPendingChangesAndResetsBackpressure()
+    {
+        var service = BuildService(frameTimeoutMs: 0);
+
+        await service.HandleEventAsync("""{"process":"System_Ping"}""");
+        await service.HandleEventAsync(InitMapConfigPayload);
+        await service.HandleEventAsync("""{"process":"InitAgent_EOF"}""");
+        await service.HandleEventAsync("""{"process":"FrameStart","total_chunks":0,"chunks_per_batch":10}""");
+        await service.HandleEventAsync("""{"process":"FrameEnd"}""");
+        await service.HandleEventAsync("""{"process":"Init_EOF","total_chunks_sent":0}""");
+
+        // Starts a new frame while Running, leaving FrameStartTick set.
+        await service.HandleEventAsync("""{"process":"FrameStart","total_chunks":2,"chunks_per_batch":1}""");
+
+        // CheckFrameTimeout fires first (timeout=0ms), discarding the pending frame and
+        // resetting ChunksPerBatch — so this chunk never triggers an ack.
+        await service.HandleEventAsync("""{"process":"EYE_SetState_Layer","id":"x","changes":{"cells":{}}}""");
+
+        _control.Verify(c => c.PublishChunkAckAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EyeSetStateLayer_NonNumericCellKey_IsSkippedAndNoAckWithoutFrameStart()
+    {
+        var service = BuildService();
+
+        await service.HandleEventAsync(InitMapConfigPayload);
+        await service.HandleEventAsync("""
+            {"process":"EYE_SetState_Layer","id":"x","changes":{"cells":{"abc":{"state":1,"height":0.1}}}}
+            """);
+
+        _control.Verify(c => c.PublishChunkAckAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EyeSetStateLayer_WithStringStateName_MapsToEnumValue()
+    {
+        var service = BuildService();
+
+        await service.HandleEventAsync(InitMapConfigPayload);
+        var act = () => service.HandleEventAsync("""
+            {"process":"EYE_SetState_Layer","id":"x","changes":{"cells":{"0":{"state":"RISK3","height":0.4}}}}
+            """);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task InitAgentLayer_WithHeights_SetsTerrainHeights()
+    {
+        var service = BuildService();
+        _terrain.Setup(t => t.ReadHeightsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new float[] { 1f, 2f, 3f, 4f });
+
+        await service.HandleEventAsync(InitMapConfigPayload);
+        var act = () => service.HandleEventAsync("""
+            {"process":"InitAgent_Layer","id":"terrain","data_path":"topo","data_filename":"topo"}
+            """);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task EyeFrameSync_WithoutNewData_DoesNothing()
+    {
+        var service = BuildService();
+
+        await service.HandleEventAsync("""{"process":"EYE_Frame_Sync","simulation_time":"00:00:01"}""");
+
+        _broadcaster.Verify(b => b.BroadcastFrameUpdateAsync(
+            It.IsAny<FrameData>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EyeFrameSync_WithNewData_BroadcastsFrameUpdate()
+    {
+        var service = BuildService();
+
+        await service.HandleEventAsync(InitMapConfigPayload);
+        await service.HandleEventAsync("""{"process":"FrameStart","total_chunks":1,"chunks_per_batch":10}""");
+        await service.HandleEventAsync("""
+            {"process":"EYE_SetState_Layer","id":"x","changes":{"cells":{"0":{"state":3,"height":0.5}}}}
+            """);
+        await service.HandleEventAsync("""{"process":"FrameEnd"}""");
+
+        await service.HandleEventAsync("""{"process":"EYE_Frame_Sync","simulation_time":"00:00:01"}""");
+
+        _broadcaster.Verify(b => b.BroadcastFrameUpdateAsync(
+            It.IsAny<FrameData>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

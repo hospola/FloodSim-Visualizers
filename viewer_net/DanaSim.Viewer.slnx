@@ -8,5 +8,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/DanaSim.Viewer.Application.Tests/DanaSim.Viewer.Application.Tests.csproj" />
     <Project Path="tests/DanaSim.Viewer.Domain.Tests/DanaSim.Viewer.Domain.Tests.csproj" />
+    <Project Path="tests/DanaSim.Viewer.Infrastructure.Tests/DanaSim.Viewer.Infrastructure.Tests.csproj" />
+    <Project Path="tests/DanaSim.Viewer.Web.Tests/DanaSim.Viewer.Web.Tests.csproj" />
   </Folder>
 </Solution>
