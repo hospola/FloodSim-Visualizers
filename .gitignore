@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+coverage.xml
+.coverage-reports/
 
 # Emulator build artifacts
 python/visualizer/tools/emulator_package/build/
@@ -13,6 +15,7 @@ python/visualizer/tools/emulator_package/windows_build/
 bin/
 obj/
 publish/
+viewer_net/coverage/
 
 # Visual Studio / Rider
 .vs/
@@ -20,6 +23,7 @@ publish/
 *.user
 *.suo
 *.userprefs
+docs/
 
 # NuGet
 *.nupkg

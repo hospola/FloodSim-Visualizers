@@ -19,10 +19,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U pip
-          pip install -r python/visualizer/requirements.txt pytest
+          pip install -r python/visualizer/requirements.txt pytest pytest-cov
 
       - name: Run tests
-        run: python -m pytest python/tests/visualizer -q
+        run: python -m pytest python/tests/visualizer -q --cov=python/visualizer --cov-report=xml:coverage.xml
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python
+          path: coverage.xml
 
   dotnet-tests:
     runs-on: ubuntu-latest
@@ -37,15 +43,36 @@ jobs:
         run: dotnet restore viewer_net/DanaSim.Viewer.slnx
 
       - name: Test
-        run: dotnet test viewer_net/DanaSim.Viewer.slnx --no-restore
+        run: |
+          dotnet test viewer_net/DanaSim.Viewer.slnx --no-restore \
+            --collect:"XPlat Code Coverage" --results-directory viewer_net/coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-dotnet
+          path: viewer_net/coverage/**/coverage.cobertura.xml
 
   sonarcloud:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [python-tests, dotnet-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Download Python coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-python
+          path: .coverage-reports/python
+
+      - name: Download .NET coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-dotnet
+          path: .coverage-reports/dotnet
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6

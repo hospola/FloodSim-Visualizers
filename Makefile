@@ -11,7 +11,7 @@ setup: setup-python setup-net
 setup-python:
 	$(PYTHON) -m venv $(VENV)
 	$(VENV_PY) -m pip install -U pip
-	$(VENV_PY) -m pip install -r python/visualizer/requirements.txt pytest
+	$(VENV_PY) -m pip install -r python/visualizer/requirements.txt pytest pytest-cov
 
 setup-net:
 	dotnet restore $(SLN)
