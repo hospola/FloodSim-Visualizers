@@ -4,6 +4,11 @@ __pycache__/
 .venv/
 .pytest_cache/
 
+# Emulator build artifacts
+python/visualizer/tools/emulator_package/build/
+python/visualizer/tools/emulator_package/dist/
+python/visualizer/tools/emulator_package/windows_build/
+
 # .NET build artifacts
 bin/
 obj/

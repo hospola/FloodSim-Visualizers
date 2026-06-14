@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  push:
+    branches: [release]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -r python/visualizer/requirements.txt pytest
+
+      - name: Run tests
+        run: python -m pytest python/tests/visualizer -q
+
+  dotnet-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore viewer_net/DanaSim.Viewer.slnx
+
+      - name: Test
+        run: dotnet test viewer_net/DanaSim.Viewer.slnx --no-restore
+
+  release:
+    needs: [python-tests, dotnet-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Determine next version
+        id: version
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          version=${latest_tag#v}
+          IFS='.' read -r major minor patch <<< "$version"
+          new_version="${major}.${minor}.$((patch + 1))"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${new_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish linux-x64
+        run: |
+          dotnet publish viewer_net/src/DanaSim.Viewer.Web/DanaSim.Viewer.Web.csproj -c Release -r linux-x64 \
+            --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o viewer_net/publish/linux-x64
+
+      - name: Publish win-x64
+        run: |
+          dotnet publish viewer_net/src/DanaSim.Viewer.Web/DanaSim.Viewer.Web.csproj -c Release -r win-x64 \
+            --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o viewer_net/publish/win-x64
+          cp viewer_net/src/DanaSim.Viewer.Web/bin/Release/net10.0/win-x64/aspnetcorev2_inprocess.dll viewer_net/publish/win-x64/
+
+      - name: Install packaging tools
+        run: sudo apt-get update && sudo apt-get install -y fakeroot nsis
+
+      - name: Build .deb
+        working-directory: viewer_net/packaging
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./build-deb.sh
+
+      - name: Build Windows installer
+        working-directory: viewer_net/packaging
+        run: makensis -DAPPVERSION=${{ steps.version.outputs.version }} danasim-viewer.nsi
+
+      - name: Build emulator (Linux)
+        working-directory: python/visualizer/tools/emulator_package
+        run: ./build_linux.sh
+
+      - name: Build emulator (Windows)
+        working-directory: python/visualizer/tools/emulator_package
+        run: ./build_windows.sh
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes \
+            viewer_net/publish/danasim-viewer_${{ steps.version.outputs.version }}_amd64.deb \
+            "viewer_net/publish/DanaSimViewer-Setup-${{ steps.version.outputs.version }}-win64.exe" \
+            python/visualizer/tools/emulator_package/dist/floodsim-emulator \
+            python/visualizer/tools/emulator_package/dist/floodsim-emulator.exe

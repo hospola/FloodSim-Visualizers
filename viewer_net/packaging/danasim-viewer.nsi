@@ -17,7 +17,9 @@
 
 ; ── Metadata ──────────────────────────────────────────────────────────────────
 !define APPNAME    "DanaSim Viewer"
-!define APPVERSION "1.0.0"
+!ifndef APPVERSION
+  !define APPVERSION "1.0.0"
+!endif
 !define PUBLISHER  "DanaSim"
 !define INSTALLDIR "$PROGRAMFILES64\DanaSim Viewer"
 !define UNREGKEY   "Software\Microsoft\Windows\CurrentVersion\Uninstall\DanaSim Viewer"
