@@ -106,8 +106,11 @@ def main(argv: list[str] | None = None) -> int:
     meta   = load_meta(csv_dir)
     rows, cols = meta["rows"], meta["cols"]
     georef = json.loads(georef_path.read_text(encoding="utf-8"))
-    min_zoom = georef["min_zoom"]
-    max_zoom = georef["max_zoom"]
+    min_zoom = int(georef["min_zoom"])
+    max_zoom = int(georef["max_zoom"])
+    if not (0 <= min_zoom <= max_zoom <= 24):
+        log.error("Invalid zoom range in %s: min_zoom=%d, max_zoom=%d", georef_path, min_zoom, max_zoom)
+        return 1
 
     dom_west  = georef["dom_west_3857"]
     dom_south = georef["dom_south_3857"]
